@@ -82,18 +82,18 @@ use core::default::Default;
 use core::fmt;
 use core::marker;
 use rand::{Rand, Rng};
-use core::hash::{Hash, sip};
+use core::hash::{Hash, Hasher, Writer};
 use core::prelude::{Option, Clone, Result, PartialEq, Eq, PartialOrd, Ord, FnOnce};
 use core::cmp::Ordering;
 use core::ops::{Deref, Drop};
 
-const MUTATING: uint = -1;
+const MUTATING: usize = -1;
 
 /// A cell with the ability to mutate the value through an immutable reference when safe
 #[stable]
 pub struct MuCell<T> {
     value: UnsafeCell<T>,
-    borrows: Cell<uint>,
+    borrows: Cell<usize>,
     nocopy: marker::NoCopy,
     noshare: marker::NoSync,
 }
@@ -244,8 +244,8 @@ impl<T: Rand> Rand for MuCell<T> {
 }
 
 #[unstable = "trait is not stable"]
-impl<T: Hash> Hash for MuCell<T> {
-    fn hash(&self, state: &mut sip::SipState) {
+    impl<T: Hash<H>, H: Hasher + Writer> Hash<H> for MuCell<T> {
+    fn hash(&self, state: &mut H) {
         self.borrow().hash(state)
     }
 }
